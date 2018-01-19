@@ -1,4 +1,4 @@
-package com.sh.shlibrary;
+package com.sh.shlibrary.widget;
 
 import android.animation.ValueAnimator;
 import android.content.Context;
