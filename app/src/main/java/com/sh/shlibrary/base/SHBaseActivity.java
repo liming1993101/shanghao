@@ -2,14 +2,20 @@ package com.sh.shlibrary.base;
 
 import android.app.Activity;
 import android.app.DialogFragment;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.TypedValue;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -21,7 +27,6 @@ import com.yanzhenjie.permission.AndPermission;
 import com.yanzhenjie.permission.PermissionListener;
 import java.util.ArrayList;
 import java.util.List;
-import rx.Subscription;
 
 
 /**
@@ -210,4 +215,73 @@ public abstract class SHBaseActivity extends AppCompatActivity {
     public void  toast(String content,int type){
         Toast.makeText(mActivity,content,type).show();
     }
+
+
+
+
+    /**
+    * 网络请求加载框
+     */
+    private ProgressDialog dialog;
+    public void showLoading() {
+        if (dialog != null && dialog.isShowing()) return;
+        dialog = new ProgressDialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setCanceledOnTouchOutside(false);
+        dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        dialog.setMessage("请求网络中...");
+        dialog.show();
+    }
+    public void dismissLoading() {
+        if (dialog != null && dialog.isShowing()) {
+            dialog.dismiss();
+        }
+    }
+
+    /** 子类通过重写该方法 来实现是否使用透明状态栏 默认不使用*/
+    protected boolean translucentStatusBar() {
+        return false;
+    }
+
+    /** 子类可以重写改变状态栏颜色 */
+
+    protected int setStatusBarColor() {
+        return getColorPrimary();
+    }
+    /** 获取主题色 */
+    public int getColorPrimary() {
+        TypedValue typedValue = new TypedValue();
+        getTheme().resolveAttribute(R.attr.colorAccent, typedValue, true);
+        return typedValue.data;
+    }
+
+    /** 设置状态栏颜色  子类通过调用该方法来实现沉浸式状态栏的接入*/
+    protected void initSystemBarTint() {
+        Window window = getWindow();
+        if (translucentStatusBar()) {
+            // 设置状态栏全透明
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+                window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+                window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+                window.setStatusBarColor(Color.TRANSPARENT);
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+            }
+            return;
+        }
+        // 沉浸式状态栏
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            //5.0以上使用原生方法
+            window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+            window.setStatusBarColor(setStatusBarColor());
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            //4.4-5.0使用三方工具类，有些4.4的手机有问题，这里为演示方便，不使用沉浸式
+//            getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+
+        }
+    }
+
+
 }
